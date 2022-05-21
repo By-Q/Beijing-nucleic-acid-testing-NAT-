@@ -1,0 +1,369 @@
+<!--
+ * @Descripttion: 
+ * @version: 
+ * @Author: Qi Baoye
+ * @Date: 2022-05-15 09:46:21
+ * @LastEditors: Qi Baoye
+ * @LastEditTime: 2022-05-21 23:55:02
+-->
+<!DOCTYPE html>
+<html >
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css"
+        integrity="sha512-hoalWLoI8r4UszCkZ5kL8vayOGVae1oxXe/2A4AO6J9+580uKHDO3JdHb7NzwwzK5xr/Fs0W40kiNHxM9vyTtQ=="
+        crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"
+        integrity="sha512-BB3hKbKWOc9Ez/TAwyWxNXeoV9c1v6FIeYiBieIWkpLjauysF18NzgR1MBNBXf8/KABdlkX68nAhlwcDFLGPCQ=="
+        crossorigin=""></script>
+    <script src="./src/js/jquery-3.6.0.min.js"></script>
+    <!-- markerCluster -->
+    <link rel="stylesheet" href="./src/css/MarkerCluster.css" />
+	<link rel="stylesheet" href="./src/css/MarkerCluster.Default.css" />
+	<script src="./src/js/leaflet.markercluster-src.js"></script>
+    
+
+    	<!-- Accurate Position Plugin -->
+	<link rel="stylesheet" href="./src/css/gps.css">
+	<script src="./src/js/Leaflet.AccuratePosition.js"></script>
+
+    <script src="./src/js/geojson-sample.js"></script>
+
+
+</head>
+
+<body>
+    <div class="grid-container">
+        <div class="grid-1">
+            <div class="control">
+                <div class="header">UCAS webgis demo<br />北京核酸检测服务</div>
+            </div>
+
+            <div id="grid-1-1" class="control-gps" onMouseOver="this.className='over';" onMouseOut="this.className='out';">
+                <div id="control-hs-container" >
+                    北京核酸检测点
+                    <label class="switch_on" id="switch_btn">
+                        <input type="checkbox" checked="checked">
+                        <span class="input checked"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="grid-1-2" class="control-gps" onMouseOver="this.className='over';" onMouseOut="this.className='out';">
+                <div id="button-gps-real">
+                    开启GPS定位
+                    <button id="startGPS" @click="startGPS">定位</button>
+                    <p id="textGPS"></p>
+                </div>
+                <div id="gps">
+                    <ul id="status" class="progressing">
+                        <!-- <li></li> -->
+                    </ul>
+                </div>
+            </div>
+
+            <div id="grid-1-3" class="control-gps" onMouseOver="this.className='over';" onMouseOut="this.className='out';">
+                <div id="button-gps-virtual">
+                    模拟定位
+                    <button id="ChoosesVirtualGPS" @click="virtualGPS">选择</button>
+                    <button id="DeleteVirtualGPS" @click="DeleteVirtualGPS">清除</button>
+                    <!-- <button id="startGPS" @click="startGPS">查询</button> -->
+                </div>
+            </div>
+
+            <div id="grid-1-4" class="control-gps" onMouseOver="this.className='over';" onMouseOut="this.className='out';">
+                <div id="circle">
+                    <div id="SetRadius" class="control-radius">
+                        <div>查询半径：<input type="range" id="radius" min="0" max="10000" step="500" value="0" onchange="show()"/> </div>
+                    <div id="Textradius"></div>
+                    </div>        
+                </div>
+                <div id="searchbutton">
+                    <button id="SearchVirtualPosition">虚拟位置查询</button>
+                    <button id="SearchRealityPosition">真实位置查询</button>
+                    <button id="DeleteResult">清除查询结果</button>
+
+                </div>
+                
+                
+            </div>
+        </div>
+        <div id="map" class="map">
+
+        </div>
+    </div>
+    
+    <script type="text/javascript" src="main.js" type="module"> </script>
+
+
+
+    <script>
+
+        // 核酸检测点的聚类效果
+        var map = map;
+        var markers = markers;
+        map.addLayer(markers)
+
+       
+         document.getElementById("switch_btn").onclick = function () {
+
+            if (this.children[0].checked == true) {
+                map.addLayer(markers)
+                this.children[1].className = "input checked"
+                
+
+            } else {
+
+                this.children[1].className = "input"
+                map.removeLayer(markers)
+            }
+
+        };
+    </script>
+
+    <script>
+
+        // 定位效果
+        var myIcon = L.icon({
+            iconUrl: "./src/image/point.png",
+            iconAnchor:[24,48]
+        });
+
+        var reality_latlng
+        document.getElementById("SearchRealityPosition").onclick =function (){ 
+            if (reality_latlng == null){
+                alert("未检测到真实位置坐标，请点击<定位>按钮后尝试")
+            };
+            
+        }
+
+        var target_hs_Layer_real = L.layerGroup()
+        var circle_real = L.circle(reality_latlng)
+        
+        function onAccuratePositionError (e) {
+			addStatus(e.message, 'error');
+		}
+
+		function onAccuratePositionProgress (e) {
+			var message = 'Progressing … (Accuracy: ' + e.accuracy + ')';
+			// addStatus(message, 'progressing');
+		}
+
+		function onAccuratePositionFound (e) {
+			var message = 'Most accurate position found (Accuracy: ' + e.accuracy + ')';
+			// addStatus(message, 'done');
+			map.setView(e.latlng, 13);
+            reality_latlng = e.latlng;
+			var real_marker = L.marker(e.latlng,{icon: myIcon}).addTo(map);
+            document.getElementById("textGPS").innerHTML="";
+            document.getElementById('startGPS').disabled=false;
+
+            // let circle = L.circle(reality_latlng)
+            // var target_hs_Layer_real = L.layerGroup()
+            document.getElementById("SearchRealityPosition").onclick =function (){ 
+
+                map.removeLayer(target_hs_Layer_real)
+                map.removeLayer(circle_real)
+                radius = document.getElementById("radius");
+                if(radius.value == 0){
+                    alert("当先搜索半径为0,请更改搜索半径")
+                };
+                circle_real = L.circle(reality_latlng,{
+                    color:'#888888',
+                    fillColor: '#888888',
+                    fillOpacity: 0.5,
+                    radius: radius.value}).addTo(map)
+                
+                let marker_group = []
+                var jug = L.geoJson(geojsonSample, {
+                    pointToLayer: function (feature, latlng) {
+                    var hs_lating = [feature.properties.poi_lat,feature.properties.poi_lon]
+                    jugement_points(hs_lating,marker_group)                        
+                    }
+                    })
+                function jugement_points (data,marker_group){
+                    
+                    var isInCircle = circle_real.getBounds().contains(data)
+                    if (isInCircle){
+                        let distance = reality_latlng.distanceTo(data); 
+                        if(distance <= radius.value){
+                            marker_group = marker_group
+                            target_hs_marker = L.marker(data,{icon: targetIcon});
+                            marker_group.push(target_hs_marker)
+
+                            target_hs_Layer_real = L.layerGroup(marker_group)
+                            map.addLayer(target_hs_Layer_real); 
+                        }    
+                        
+                    }
+                    
+                }
+
+            }
+            
+            document.getElementById("DeleteResult").onclick = function(){
+                map.removeLayer(target_hs_Layer_real)
+                map.removeLayer(circle_real)
+                // map.removeLayer(Virtual_marker)
+                // map.removeLayer(real_marker)
+            }
+		}
+
+		function addStatus (message, className) {
+			var ul = document.getElementById('status'),
+				li = document.createElement('li');
+			li.appendChild(document.createTextNode(message));
+			ul.className = className;
+			ul.appendChild(li);
+		}
+
+        document.getElementById("startGPS").onclick = function (){
+            
+            document.getElementById("textGPS").innerHTML="开始定位...";
+            document.getElementById('startGPS').disabled=true;
+            map.on('accuratepositionprogress', onAccuratePositionProgress);
+            map.on('accuratepositionfound', onAccuratePositionFound);
+            map.on('accuratepositionerror', onAccuratePositionError);
+
+           
+            map.findAccuratePosition({
+                maxWait: 10000,
+                desiredAccuracy: 20
+            });
+            console.log('按钮已经点击')
+            
+
+        }
+        
+        
+   
+
+    </script>
+
+    <script>
+        // 模拟点的定位
+        let isVirtualClick = false
+        var Virtual_marker = null
+        var vrIcon = L.icon({
+                iconUrl: "./src/image/virtual.png",
+                iconAnchor:[24,48]
+            });
+        
+        var targetIcon = L.icon({
+            iconUrl: "./src/image/target.png",
+            iconAnchor:[24,48]
+        });  
+
+        var virtual_latlng
+        document.getElementById("SearchVirtualPosition").onclick =function (){
+            if (virtual_latlng == null){
+                alert("未检测到虚拟位置坐标，请点击<选择>按钮后尝试")
+            }
+        }
+
+        document.getElementById("ChoosesVirtualGPS").onclick = function(){
+            
+            map.on('mouseup', (e) => {
+                virtual_latlng = e.latlng;
+                console.log(virtual_latlng);// {lat: 30.59, lng: 114.32}
+                Virtual_marker = L.marker(virtual_latlng,{icon: vrIcon,draggable:true,riseOnHover:true,
+                                                            title:'虚拟位置（按住鼠标可移动）'}).addTo(map);  
+                isVirtualClick = true 
+                console.log(isVirtualClick)
+
+
+                if (isVirtualClick){
+                map.off('mouseup');
+                }
+                
+                Virtual_marker.on('dragend', function (event) {
+                virtual_latlng =Virtual_marker.getLatLng();
+                console.log(virtual_latlng);
+                })
+
+                let circle = L.circle(virtual_latlng)
+                let target_hs_Layer = L.layerGroup()
+                document.getElementById("SearchVirtualPosition").onclick =function (){
+                    
+                    map.removeLayer(target_hs_Layer)
+                    map.removeLayer(circle)
+                    radius = document.getElementById("radius");
+                    if(radius.value == 0){
+                        alert("当先搜索半径为0,请更改搜索半径")
+                     };
+                    circle = L.circle(virtual_latlng,{
+                        color:'#888888',
+                        fillColor: '#888888',
+                        fillOpacity: 0.5,
+                        radius: radius.value}).addTo(map)
+                    
+                    console.log(circle.getBounds().contains([39.87,116.39]))
+                 
+                    let marker_group = []
+                    var jug = L.geoJson(geojsonSample, {
+                        pointToLayer: function (feature, latlng) {
+                        var hs_lating = [feature.properties.poi_lat,feature.properties.poi_lon]
+                        jugement_points(hs_lating,marker_group)                        
+                        }
+                     })
+                    function jugement_points (data,marker_group){
+                        
+                        var isInCircle = circle.getBounds().contains(data)
+                        if (isInCircle){
+                            let distance = virtual_latlng.distanceTo(data); 
+                            if(distance <= radius.value){
+                                marker_group = marker_group
+                                target_hs_marker = L.marker(data,{icon: targetIcon});
+                                marker_group.push(target_hs_marker)
+
+                                target_hs_Layer = L.layerGroup(marker_group)
+                                map.addLayer(target_hs_Layer); 
+                            }    
+                            
+                        }
+                        
+                    }
+
+                }
+
+                document.getElementById("DeleteResult").onclick = function(){
+                    map.removeLayer(target_hs_Layer)
+                    map.removeLayer(circle)
+                    map.removeLayer(Virtual_marker)
+                    map.removeLayer(target_hs_Layer_real)
+                    map.removeLayer(circle_real)
+                }
+            });  
+
+
+        };
+
+        document.getElementById("DeleteVirtualGPS").onclick =  function(){
+            if (Virtual_marker==null){
+                alert("未检测到虚拟位置");
+            }
+            else{
+                map.removeLayer(Virtual_marker)
+            }
+            
+        }
+
+
+    </script>
+
+    <script>
+        function show(){
+            ran = document.getElementById("radius");
+            document.getElementById("Textradius").innerHTML=radius.value + '米';
+        }
+
+    </script>
+
+</body>
+
+</html>
