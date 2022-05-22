@@ -21,6 +21,10 @@ body{
     grid-template-rows: 100vh;
     
 }
+
+.header{
+    font-size: 1vw;;
+}
 .control{
     display: flex;
     align-items: center;

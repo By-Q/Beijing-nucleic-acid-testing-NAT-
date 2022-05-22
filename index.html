@@ -4,7 +4,7 @@
  * @Author: Qi Baoye
  * @Date: 2022-05-15 09:46:21
  * @LastEditors: Qi Baoye
- * @LastEditTime: 2022-05-21 23:55:02
+ * @LastEditTime: 2022-05-22 11:40:51
 -->
 <!DOCTYPE html>
 <html >
@@ -12,8 +12,9 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0,maximumscale=1.0, minimum-scale=1.0"> -->
+    <title>北京核酸检测服务</title>
+    
     <link rel="stylesheet" href="style.css" type="text/css" media="screen" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css"
         integrity="sha512-hoalWLoI8r4UszCkZ5kL8vayOGVae1oxXe/2A4AO6J9+580uKHDO3JdHb7NzwwzK5xr/Fs0W40kiNHxM9vyTtQ=="
@@ -33,6 +34,7 @@
 	<script src="./src/js/Leaflet.AccuratePosition.js"></script>
 
     <script src="./src/js/geojson-sample.js"></script>
+    <!-- <script src="./set_meta.js"></script> -->
 
 
 </head>
@@ -195,7 +197,9 @@
                             marker_group = marker_group
                             target_hs_marker = L.marker(data,{icon: targetIcon});
                             marker_group.push(target_hs_marker)
-
+                            if (marker_group == null){
+                                alert("未查询到"+radius.value+"米内有核酸检测点。您的位置可能不在北京及周边地区,或者增加查询距离")
+                            }
                             target_hs_Layer_real = L.layerGroup(marker_group)
                             map.addLayer(target_hs_Layer_real); 
                         }    
@@ -266,16 +270,17 @@
             }
         }
 
+
+        var Virtual_marker = L.marker({lat: 0, lng: 0})
         document.getElementById("ChoosesVirtualGPS").onclick = function(){
-            
+            map.removeLayer(Virtual_marker)
             map.on('mouseup', (e) => {
                 virtual_latlng = e.latlng;
                 console.log(virtual_latlng);// {lat: 30.59, lng: 114.32}
                 Virtual_marker = L.marker(virtual_latlng,{icon: vrIcon,draggable:true,riseOnHover:true,
                                                             title:'虚拟位置（按住鼠标可移动）'}).addTo(map);  
                 isVirtualClick = true 
-                console.log(isVirtualClick)
-
+                // console.log(isVirtualClick)
 
                 if (isVirtualClick){
                 map.off('mouseup');
@@ -302,7 +307,7 @@
                         fillOpacity: 0.5,
                         radius: radius.value}).addTo(map)
                     
-                    console.log(circle.getBounds().contains([39.87,116.39]))
+                    // console.log(circle.getBounds().contains([39.87,116.39]))
                  
                     let marker_group = []
                     var jug = L.geoJson(geojsonSample, {
@@ -321,12 +326,18 @@
                                 target_hs_marker = L.marker(data,{icon: targetIcon});
                                 marker_group.push(target_hs_marker)
 
+                                console.log(marker_group)
                                 target_hs_Layer = L.layerGroup(marker_group)
                                 map.addLayer(target_hs_Layer); 
                             }    
                             
                         }
+
+
                         
+                    }
+                    if (marker_group.length == 0){
+                                    alert("未查询到"+radius.value+"米内有核酸检测点。您的位置可能不在北京及周边地区,或者增加查询距离")
                     }
 
                 }
@@ -349,6 +360,7 @@
             }
             else{
                 map.removeLayer(Virtual_marker)
+
             }
             
         }
