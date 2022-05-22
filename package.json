@@ -1,0 +1,20 @@
+{
+  "name": "beijing-nucleic-acid-testing-nat-",
+  "version": "1.0.0",
+  "description": "ucas webgis",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "server": "live-server ./ --port=8181 --host=localhost --proxy=/api:http://www.abc.com/api/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/By-Q/Beijing-nucleic-acid-testing-NAT-.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/By-Q/Beijing-nucleic-acid-testing-NAT-/issues"
+  },
+  "homepage": "https://github.com/By-Q/Beijing-nucleic-acid-testing-NAT-#readme"
+}
